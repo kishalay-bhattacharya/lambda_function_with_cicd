@@ -1,0 +1,110 @@
+name: 'Lamda deployed with ci-cd'
+
+on:
+  push:
+     branches:
+       - test
+       - master
+
+
+
+jobs:
+   deploy:
+      runs-on: ubuntu-latest
+      #To spin up a machine to run these commands and it will be ubuntu m/c
+
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v3    
+
+        - name: Install dependencies
+          run: |
+            sudo apt-get update   
+            sudo apt-get install -y python3.11 python3.11-pip python3.11-venv jq zip
+            pip3 install boto3
+
+        - name: Package the lambda function
+          run: |
+            python -m venv venv
+            Source venv/scripts/activate 
+            cd lamda_function
+            mkdir package
+            pip install -r requirements.txt -t ./package
+            mv app.py ./package
+            cd package 
+            zip -r ../../lambda_handler.zip .
+            cd ../..
+
+        - name: Copy the environment variables
+        #To dynamically set environment variables in github actions runner..
+          run: |    
+            if ["${{github.ref_name}}"== "master" ] ;then 
+              echo "ENV=PROD" >> $GITHUB_ENV
+              echo "API_KEY=main_api" >>$GITHUB_ENV
+              echo "LOG_LEVEL=INFO" >>$GITHUB_ENV
+            
+            else
+              echo "ENV=test" >> $GITHUB_ENV
+              echo "API_KEY=test_api" >>$GITHUB_ENV
+              echo "LOG_LEVEL=INFO" >>$GITHUB_ENV
+            
+            fi  
+        - name: Deploy lambda
+          env:
+            AWS_ACCESS_ID: ${{secrets.ACCESS_KEY_ID}}
+            AWS_SECRET_KEY: ${{secrets.SECRET_ACCESS_KEY}}
+            AWS_DEFAULT_REGION : ap-south-1
+          run: |
+            FUNCTION_NAME="lambda_function_${{github.ref_name}}"
+            REGION="ap-south-1"
+
+            FUNCTION_EXISTS=$(aws get-function --function-name $FUNCTION_NAME --region $REGION || echo "false")
+
+            if ["$FUNCTION_EXISTS"==false]; then
+               aws lambda create-function \
+                  --function-name $FUNCTION_NAME \
+                  --runtime python3.11 \
+                  --region $REGION \
+                  --timeout 240 \
+                  --zip-file fileb://lambda_handler.zip \
+                  --handler app.lambda_event \
+                  --role arn:aws:iam::686255953563:role/service-role/demoFunction-role-uteyqz1q \
+                  --environment Variables={ENV=${{env.ENV}},API_KEY=${{env.API_KEY}},LOG_LEVEL=${{env.LOG_LEVEL}}}
+
+            else
+               aws lambda update-function-code \
+                   --function-name $FUNCTION_NAME --region $REGION \
+                   --zip-file fileb://lambda_handler.zip
+                   
+            
+              echo "Checking if the code updation or function creation has completed"
+              while true;
+              do 
+                last_update= $(aws get-function --function-name $FUNCTION_NAME --region $REGION --query 'Configuration.LastUpdateStatus' --output text )
+                if ["$last_update" == "Successful"]; then 
+                 echo "Lambda has been successfully created or updated"
+                 break
+              
+                elif ["$last_update"=="Failed"]
+                  echo "Function update has failed"
+                  exit 1
+
+                else 
+                   sleep 2  
+              done
+              
+              aws lambda update-function-configuration \
+                  --function-name $FUNCTION_NAME --region $REGION \
+                  --timeout 300 --environment Variables={ENV=${{env.ENV}},API_KEY=${{env.API_KEY}},LOG_LEVEL=${{env.LOG_LEVEL}}}
+              
+                  
+            fi
+                
+
+              
+
+            
+
+
+
+                
