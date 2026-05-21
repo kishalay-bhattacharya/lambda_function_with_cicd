@@ -60,7 +60,7 @@ jobs:
             FUNCTION_NAME="lambda_function_${{ github.ref_name }}"
             REGION="ap-south-1"
 
-            FUNCTION_EXISTS=$(aws get-function --function-name $FUNCTION_NAME --region $REGION || echo "false")
+            FUNCTION_EXISTS=$(aws lambda get-function --function-name $FUNCTION_NAME --region $REGION || echo "false")
 
             if [ "$FUNCTION_EXISTS"==false ]; then
                aws lambda create-function \
@@ -82,7 +82,7 @@ jobs:
               echo "Checking if the code updation or function creation has completed"
               while true;
               do 
-                last_update= $(aws get-function --function-name $FUNCTION_NAME --region $REGION --query 'Configuration.LastUpdateStatus')
+                last_update= $(aws lambda get-function --function-name $FUNCTION_NAME --region $REGION --query 'Configuration.LastUpdateStatus')
                 if [ "$last_update" == "Successful" ]; then 
                  echo "Lambda has been successfully created or updated"
                  break
