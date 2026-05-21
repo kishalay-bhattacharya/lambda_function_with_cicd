@@ -61,8 +61,10 @@ jobs:
             REGION="ap-south-1"
 
             FUNCTION_EXISTS=$(aws lambda get-function --function-name $FUNCTION_NAME --region $REGION || echo "false")
+            
+            echo "Function exists : $FUNCTION_EXISTS"
 
-            if [ "$FUNCTION_EXISTS"==false ]; then
+            if [ "$FUNCTION_EXISTS"== "false" ]; then
                aws lambda create-function \
                   --function-name $FUNCTION_NAME \
                   --runtime python3.11 \
