@@ -31,7 +31,7 @@ jobs:
             source venv/bin/activate 
             cd lambda_function
             mkdir package
-            pip install -r requirements.txt -t ./package
+            pip install --no-cache-dir -r requirements.txt -t ./package
             mv app.py ./package
             cd package 
             zip -r ../../lambda_handler.zip .
