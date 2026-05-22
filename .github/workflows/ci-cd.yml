@@ -67,6 +67,7 @@ jobs:
             echo "Function exists : $FUNCTION_EXISTS"
 
             if [ "$FUNCTION_EXISTS" == "false" ]; then
+               echo "Inside the if block to check if lambda function exists!"
                aws lambda create-function \
                   --function-name $FUNCTION_NAME \
                   --runtime python3.11 \
@@ -77,15 +78,15 @@ jobs:
                   --role arn:aws:iam::686255953563:role/service-role/demoFunction-role-uteyqz1q \
                   --environment "Variables={ENV=${{ env.ENV }},API_KEY=${{ env.API_KEY }},LOG_LEVEL=${{ env.LOG_LEVEL }}}"
             else
+              echo "Inside the else block to check if lambda function exists"
               aws lambda update-function-code \
                    --function-name $FUNCTION_NAME --region $REGION \
                    --zip-file fileb://lambda_handler.zip
                    
             
               echo "Checking if the code updation or function creation has completed"
-              while true;
-              do 
-                last_update=aws lambda get-function --function-name $FUNCTION_NAME --region $REGION --query 'Configuration.LastUpdateStatus'
+              while true; do 
+                last_update=$(aws lambda get-function --function-name $FUNCTION_NAME --region $REGION --query 'Configuration.LastUpdateStatus')
                 echo $last_update
                 if [ $last_update == "Successful" ]; then 
                   echo "Lambda has been successfully created or updated"
