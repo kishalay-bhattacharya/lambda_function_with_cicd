@@ -40,7 +40,8 @@ jobs:
         - name: Copy the environment variables
         #To dynamically set environment variables in github actions runner..
           run: |    
-            if [ "${{ github.ref_name }}"== "master" ] ;then 
+            echo "Current branch is : ${{ github.ref_name }}"
+            if [ "${{ github.ref_name }}" == "master" ] ;then 
               echo "ENV=PROD" >> $GITHUB_ENV
               echo "API_KEY=main_api" >> $GITHUB_ENV
               echo "LOG_LEVEL=INFO" >> $GITHUB_ENV
