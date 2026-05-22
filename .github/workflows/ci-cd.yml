@@ -39,7 +39,8 @@ jobs:
 
         - name: Copy the environment variables
         #To dynamically set environment variables in github actions runner..
-          run: |    
+          run: |  
+            echo ${{ github.ref_name }}  
             echo "Current branch is : ${{ github.ref_name }}"
             if [ "${{ github.ref_name }}" == "master" ]; then 
               echo "ENV=PROD" >> $GITHUB_ENV
@@ -84,7 +85,7 @@ jobs:
               echo "Checking if the code updation or function creation has completed"
               while true;
               do 
-                last_update= $(aws lambda get-function --function-name $FUNCTION_NAME --region $REGION --query 'Configuration.LastUpdateStatus')
+                last_update=aws lambda get-function --function-name $FUNCTION_NAME --region $REGION --query 'Configuration.LastUpdateStatus'
                 echo $last_update
                 if [ $last_update == "Successful" ]; then 
                   echo "Lambda has been successfully created or updated"
