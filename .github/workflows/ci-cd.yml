@@ -88,15 +88,15 @@ jobs:
               while true; do 
                 last_update=$(aws lambda get-function --function-name $FUNCTION_NAME --region $REGION --query 'Configuration.LastUpdateStatus')
                 echo $last_update
-                if [ $last_update == "Successful" ]; then 
+                if [ "$last_update" == "Successful" ]; then 
                   echo "Lambda has been successfully created or updated"
                   break
               
-                elif [ $last_update == "Failed" ]; then
+                elif [ "$last_update" == "Failed" ]; then
                   echo "Function update has failed"
                   exit 1
 
-                elif [ $last_update == "InProgress" ]; then 
+                elif [ "$last_update" == "InProgress" ]; then 
                   sleep 2 
 
                 fi    
